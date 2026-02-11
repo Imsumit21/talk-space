@@ -1,0 +1,46 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server/src:/app/server/src
+      - ./shared:/app/shared
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - CLIENT_URL=http://localhost:5173
+    restart: unless-stopped
+
+  # Uncomment for production deployment
+  # client:
+  #   build:
+  #     context: .
+  #     dockerfile: client/Dockerfile
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - server
+
+  # Phase 4: Database
+  # postgres:
+  #   image: postgres:15-alpine
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     POSTGRES_DB: talkspace
+  #     POSTGRES_USER: talkspace
+  #     POSTGRES_PASSWORD: talkspace_dev
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+  # Phase 4: Cache
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+
+# volumes:
+#   postgres_data:
