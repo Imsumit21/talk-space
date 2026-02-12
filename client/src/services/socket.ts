@@ -2,6 +2,13 @@ import { io, Socket } from 'socket.io-client';
 import type { ServerToClientEvents, ClientToServerEvents } from '@shared/types/messages';
 import { TICK_RATE } from '@shared/types/messages';
 import { useGameStore } from '../store/useGameStore';
+import {
+  handleProximityEnter,
+  handleProximityExit,
+  handleNewProducer,
+  handleProducerClosed,
+  cleanupWebRTC,
+} from './webrtc';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 
@@ -16,8 +23,6 @@ export function connectSocket(): Socket<ServerToClientEvents, ClientToServerEven
     autoConnect: true,
   });
 
-  const store = useGameStore.getState;
-
   socket.on('connect', () => {
     console.log('Connected to server');
     useGameStore.setState({ connected: true });
@@ -25,6 +30,7 @@ export function connectSocket(): Socket<ServerToClientEvents, ClientToServerEven
 
   socket.on('disconnect', () => {
     console.log('Disconnected from server');
+    cleanupWebRTC();
     useGameStore.setState({ connected: false, joined: false });
     stopPositionSync();
   });
@@ -57,6 +63,24 @@ export function connectSocket(): Socket<ServerToClientEvents, ClientToServerEven
     useGameStore.getState().removeRemotePlayer(userId);
   });
 
+  // Proximity events
+  socket.on('proximityEnter', (data) => {
+    handleProximityEnter(data.userId);
+  });
+
+  socket.on('proximityExit', (data) => {
+    handleProximityExit(data.userId);
+  });
+
+  // mediasoup signaling events
+  socket.on('newProducer', (data) => {
+    handleNewProducer(data.userId, data.producerId);
+  });
+
+  socket.on('producerClosed', (data) => {
+    handleProducerClosed(data.userId);
+  });
+
   return socket;
 }
 
@@ -84,6 +108,7 @@ function stopPositionSync() {
 }
 
 export function disconnectSocket() {
+  cleanupWebRTC();
   stopPositionSync();
   socket?.disconnect();
   socket = null;

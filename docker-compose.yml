@@ -5,6 +5,7 @@ services:
       dockerfile: server/Dockerfile
     ports:
       - "3000:3000"
+      - "40000-40100:40000-40100/udp"
     volumes:
       - ./server/src:/app/server/src
       - ./shared:/app/shared
@@ -12,6 +13,8 @@ services:
       - NODE_ENV=development
       - PORT=3000
       - CLIENT_URL=http://localhost:5173
+      - MEDIASOUP_LISTEN_IP=0.0.0.0
+      - MEDIASOUP_ANNOUNCED_IP=127.0.0.1
     restart: unless-stopped
 
   # Uncomment for production deployment

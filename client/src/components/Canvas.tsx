@@ -105,6 +105,15 @@ export function Canvas() {
         }
       }
 
+      // --- Update proximity indicators ---
+      const { nearbyUsers } = state;
+      for (const [id, avatar] of avatarsRef.current) {
+        avatar.setInProximity(nearbyUsers.has(id));
+      }
+      if (localAvatarRef.current) {
+        localAvatarRef.current.setInProximity(nearbyUsers.size > 0);
+      }
+
       // --- Camera follow local player ---
       const screen = app.screen;
       app.stage.pivot.x = localPlayer.position.x;

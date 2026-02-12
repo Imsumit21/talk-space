@@ -5,9 +5,11 @@ const NAMEPLATE_OFFSET = 30;
 
 export class Avatar extends Container {
   private circle: Graphics;
+  private proximityRing: Graphics;
   private nameplate: Text;
   private _targetX = 0;
   private _targetY = 0;
+  private _inProximity = false;
   public isLocal = false;
 
   constructor(username: string, color: string, isLocal = false) {
@@ -18,6 +20,13 @@ export class Avatar extends Container {
     this.circle = new Graphics();
     this.drawCircle(color, isLocal);
     this.addChild(this.circle);
+
+    // Proximity voice indicator (green ring, initially hidden)
+    this.proximityRing = new Graphics();
+    this.proximityRing.lineStyle(2, 0x2ecc71, 0.6);
+    this.proximityRing.drawCircle(0, 0, AVATAR_RADIUS + 6);
+    this.proximityRing.visible = false;
+    this.addChild(this.proximityRing);
 
     // Nameplate
     this.nameplate = new Text(username, new TextStyle({
@@ -57,5 +66,11 @@ export class Avatar extends Container {
     if (this.isLocal) return; // Local player moves directly
     this.x += (this._targetX - this.x) * alpha;
     this.y += (this._targetY - this.y) * alpha;
+  }
+
+  setInProximity(inProximity: boolean): void {
+    if (this._inProximity === inProximity) return;
+    this._inProximity = inProximity;
+    this.proximityRing.visible = inProximity;
   }
 }

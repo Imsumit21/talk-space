@@ -20,6 +20,12 @@ interface GameState {
   // Input
   pressedKeys: Set<string>;
 
+  // Audio/proximity
+  nearbyUsers: Set<string>;
+  activeVoiceConnections: number;
+  muted: boolean;
+  micInitialized: boolean;
+
   // Actions
   setConnected: (connected: boolean) => void;
   setLocalPlayer: (player: LocalPlayer) => void;
@@ -30,6 +36,17 @@ interface GameState {
   addKey: (key: string) => void;
   removeKey: (key: string) => void;
   setJoined: (joined: boolean) => void;
+
+  // Proximity actions
+  addNearbyUser: (userId: string) => void;
+  removeNearbyUser: (userId: string) => void;
+  clearNearbyUsers: () => void;
+
+  // Audio actions
+  toggleMute: () => void;
+  setMuted: (muted: boolean) => void;
+  setActiveVoiceConnections: (count: number) => void;
+  setMicInitialized: (initialized: boolean) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -38,6 +55,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   localPlayer: null,
   remotePlayers: new Map(),
   pressedKeys: new Set(),
+  nearbyUsers: new Set(),
+  activeVoiceConnections: 0,
+  muted: false,
+  micInitialized: false,
 
   setConnected: (connected) => set({ connected }),
 
@@ -90,4 +111,30 @@ export const useGameStore = create<GameState>((set, get) => ({
     next.delete(key);
     set({ pressedKeys: next });
   },
+
+  // Proximity
+  addNearbyUser: (userId) => {
+    const { nearbyUsers } = get();
+    const next = new Set(nearbyUsers);
+    next.add(userId);
+    set({ nearbyUsers: next });
+  },
+
+  removeNearbyUser: (userId) => {
+    const { nearbyUsers } = get();
+    const next = new Set(nearbyUsers);
+    next.delete(userId);
+    set({ nearbyUsers: next });
+  },
+
+  clearNearbyUsers: () => set({ nearbyUsers: new Set() }),
+
+  // Audio
+  toggleMute: () => set((state) => ({ muted: !state.muted })),
+
+  setMuted: (muted) => set({ muted }),
+
+  setActiveVoiceConnections: (count) => set({ activeVoiceConnections: count }),
+
+  setMicInitialized: (initialized) => set({ micInitialized: initialized }),
 }));
