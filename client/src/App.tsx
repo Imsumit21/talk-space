@@ -1,13 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Canvas } from './components/Canvas';
 import { connectSocket, joinGame, disconnectSocket } from './services/socket';
 import { useGameStore } from './store/useGameStore';
 import { toggleMute } from './services/webrtc';
+import { spatialAudio } from './services/spatialAudio';
 
 function VoiceControls() {
   const muted = useGameStore((s) => s.muted);
   const activeVoiceConnections = useGameStore((s) => s.activeVoiceConnections);
   const nearbyUsers = useGameStore((s) => s.nearbyUsers);
+  const masterVolume = useGameStore((s) => s.masterVolume);
+
+  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const volume = parseFloat(e.target.value);
+    useGameStore.getState().setMasterVolume(volume);
+    spatialAudio.setMasterVolume(volume);
+  }, []);
 
   if (nearbyUsers.size === 0 && activeVoiceConnections === 0) return null;
 
@@ -34,6 +42,18 @@ function VoiceControls() {
         )}
       </button>
 
+      {/* Volume slider */}
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.05"
+        value={masterVolume}
+        onChange={handleVolumeChange}
+        className="w-20 h-1 accent-blue-500 cursor-pointer"
+        title={`Volume: ${Math.round(masterVolume * 100)}%`}
+      />
+
       <span className="text-white text-sm font-medium">
         {activeVoiceConnections} voice{activeVoiceConnections !== 1 ? 's' : ''}
       </span>
@@ -48,13 +68,19 @@ export function App() {
 
   useEffect(() => {
     connectSocket();
-    return () => disconnectSocket();
+    return () => {
+      disconnectSocket();
+      spatialAudio.cleanup();
+    };
   }, []);
 
-  const handleJoin = (e: React.FormEvent) => {
+  const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     const name = username.trim();
     if (name && connected) {
+      // Initialize spatial audio on user gesture (satisfies autoplay policy)
+      spatialAudio.initialize();
+      await spatialAudio.resume();
       joinGame(name);
     }
   };

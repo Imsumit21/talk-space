@@ -25,6 +25,9 @@ interface GameState {
   activeVoiceConnections: number;
   muted: boolean;
   micInitialized: boolean;
+  masterVolume: number;
+  audioInitialized: boolean;
+  speakingUsers: Set<string>;
 
   // Actions
   setConnected: (connected: boolean) => void;
@@ -47,6 +50,9 @@ interface GameState {
   setMuted: (muted: boolean) => void;
   setActiveVoiceConnections: (count: number) => void;
   setMicInitialized: (initialized: boolean) => void;
+  setMasterVolume: (volume: number) => void;
+  setAudioInitialized: (initialized: boolean) => void;
+  setSpeakingUsers: (users: Set<string>) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -59,6 +65,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   activeVoiceConnections: 0,
   muted: false,
   micInitialized: false,
+  masterVolume: 0.8,
+  audioInitialized: false,
+  speakingUsers: new Set(),
 
   setConnected: (connected) => set({ connected }),
 
@@ -137,4 +146,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   setActiveVoiceConnections: (count) => set({ activeVoiceConnections: count }),
 
   setMicInitialized: (initialized) => set({ micInitialized: initialized }),
+
+  setMasterVolume: (volume) => set({ masterVolume: Math.max(0, Math.min(1, volume)) }),
+
+  setAudioInitialized: (initialized) => set({ audioInitialized: initialized }),
+
+  setSpeakingUsers: (users) => set({ speakingUsers: users }),
 }));

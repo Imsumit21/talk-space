@@ -3,12 +3,14 @@ import { Application, Graphics } from 'pixi.js';
 import { Avatar } from './Avatar';
 import { useGameStore } from '../store/useGameStore';
 import { WORLD_WIDTH, WORLD_HEIGHT } from '@shared/types/messages';
+import { spatialAudio } from '../services/spatialAudio';
 
 const MOVEMENT_SPEED = 2.5; // pixels per frame at 60fps
 const INTERPOLATION_ALPHA = 0.2;
 const GRID_SIZE = 200;
 const GRID_COLOR = 0x1a1a2e;
 const BG_COLOR = 0x0f0f23;
+const SPEAKING_CHECK_INTERVAL = 6; // Check speaking every ~6 frames (~100ms at 60fps)
 
 export function Canvas() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -45,6 +47,8 @@ export function Canvas() {
     app.stage.addChild(grid);
 
     // Game loop
+    let speakingFrameCounter = 0;
+    let lastSpeakingUsers = new Set<string>();
     app.ticker.add(() => {
       const state = useGameStore.getState();
       const { localPlayer, remotePlayers, pressedKeys } = state;
@@ -105,10 +109,32 @@ export function Canvas() {
         }
       }
 
-      // --- Update proximity indicators ---
+      // --- Update spatial audio positions ---
+      spatialAudio.updateListenerPosition(localPlayer.position.x, localPlayer.position.y);
+      for (const [id, remote] of remotePlayers) {
+        spatialAudio.updateSourcePosition(id, remote.position.x, remote.position.y);
+      }
+
+      // --- Update speaking state (throttled to ~100ms) ---
+      speakingFrameCounter++;
+      if (speakingFrameCounter >= SPEAKING_CHECK_INTERVAL) {
+        speakingFrameCounter = 0;
+        const newSpeaking = spatialAudio.getSpeakingUsers();
+        // Only update store if speaking set actually changed
+        if (newSpeaking.size !== lastSpeakingUsers.size ||
+            [...newSpeaking].some(id => !lastSpeakingUsers.has(id))) {
+          lastSpeakingUsers = newSpeaking;
+          useGameStore.getState().setSpeakingUsers(newSpeaking);
+        }
+      }
+
+      // --- Update proximity & speaking indicators ---
       const { nearbyUsers } = state;
+      const delta = app.ticker.deltaMS;
       for (const [id, avatar] of avatarsRef.current) {
         avatar.setInProximity(nearbyUsers.has(id));
+        avatar.setSpeaking(lastSpeakingUsers.has(id));
+        avatar.updateSpeakingAnimation(delta);
       }
       if (localAvatarRef.current) {
         localAvatarRef.current.setInProximity(nearbyUsers.size > 0);

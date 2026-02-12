@@ -2,6 +2,7 @@ import { Device, types as mediasoupTypes } from 'mediasoup-client';
 import { getSocket } from './socket';
 import { useGameStore } from '../store/useGameStore';
 import { MAX_AUDIO_CONNECTIONS } from '@shared/types/messages';
+import { spatialAudio } from './spatialAudio';
 
 type Transport = mediasoupTypes.Transport;
 type Producer = mediasoupTypes.Producer;
@@ -217,12 +218,9 @@ async function consumeProducer(
   consumers.set(userId, consumer);
   knownProducers.set(userId, producerId);
 
-  // Play audio through a hidden <audio> element
-  const audioElement = new Audio();
-  audioElement.srcObject = new MediaStream([consumer.track]);
-  audioElement.autoplay = true;
-  audioElement.dataset.userId = userId;
-  document.body.appendChild(audioElement);
+  // Route audio through spatial audio service for 3D positioning
+  const stream = new MediaStream([consumer.track]);
+  spatialAudio.addStream(userId, stream);
 
   // Resume consumer on server (created paused)
   socket.emit('consumerResume' as any, { consumerId: consumer.id }, () => {});
@@ -230,14 +228,14 @@ async function consumeProducer(
   useGameStore.getState().setActiveVoiceConnections(consumers.size);
 
   consumer.on('transportclose', () => {
-    removeAudioElement(userId);
+    spatialAudio.removeStream(userId);
     consumers.delete(userId);
     knownProducers.delete(userId);
     useGameStore.getState().setActiveVoiceConnections(consumers.size);
   });
 
   consumer.on('trackended', () => {
-    removeAudioElement(userId);
+    spatialAudio.removeStream(userId);
     consumers.delete(userId);
     knownProducers.delete(userId);
     useGameStore.getState().setActiveVoiceConnections(consumers.size);
@@ -251,7 +249,7 @@ function disconnectUser(userId: string): void {
     consumers.delete(userId);
   }
   knownProducers.delete(userId);
-  removeAudioElement(userId);
+  spatialAudio.removeStream(userId);
   useGameStore.getState().setActiveVoiceConnections(consumers.size);
 }
 
@@ -282,18 +280,13 @@ function disconnectFarthestUser(): void {
   }
 }
 
-function removeAudioElement(userId: string): void {
-  const el = document.querySelector(`audio[data-user-id="${userId}"]`);
-  if (el) {
-    (el as HTMLAudioElement).srcObject = null;
-    el.remove();
-  }
-}
-
 // --- PUBLIC API ---
 
 export async function handleProximityEnter(userId: string): Promise<void> {
   useGameStore.getState().addNearbyUser(userId);
+
+  // Play proximity notification sound
+  spatialAudio.playNotificationSound();
 
   try {
     await ensureProducing();
@@ -355,7 +348,7 @@ export function toggleMute(): void {
 export function cleanupWebRTC(): void {
   for (const [userId, consumer] of consumers) {
     consumer.close();
-    removeAudioElement(userId);
+    spatialAudio.removeStream(userId);
   }
   consumers.clear();
   knownProducers.clear();

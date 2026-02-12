@@ -6,10 +6,13 @@ const NAMEPLATE_OFFSET = 30;
 export class Avatar extends Container {
   private circle: Graphics;
   private proximityRing: Graphics;
+  private speakingRing: Graphics;
   private nameplate: Text;
   private _targetX = 0;
   private _targetY = 0;
   private _inProximity = false;
+  private _isSpeaking = false;
+  private _speakingPulse = 0;
   public isLocal = false;
 
   constructor(username: string, color: string, isLocal = false) {
@@ -27,6 +30,13 @@ export class Avatar extends Container {
     this.proximityRing.drawCircle(0, 0, AVATAR_RADIUS + 6);
     this.proximityRing.visible = false;
     this.addChild(this.proximityRing);
+
+    // Speaking indicator (pulsing yellow-orange ring, initially hidden)
+    this.speakingRing = new Graphics();
+    this.speakingRing.lineStyle(3, 0xf1c40f, 0.8);
+    this.speakingRing.drawCircle(0, 0, AVATAR_RADIUS + 10);
+    this.speakingRing.visible = false;
+    this.addChild(this.speakingRing);
 
     // Nameplate
     this.nameplate = new Text(username, new TextStyle({
@@ -72,5 +82,25 @@ export class Avatar extends Container {
     if (this._inProximity === inProximity) return;
     this._inProximity = inProximity;
     this.proximityRing.visible = inProximity;
+  }
+
+  setSpeaking(speaking: boolean): void {
+    if (this._isSpeaking === speaking) return;
+    this._isSpeaking = speaking;
+    this.speakingRing.visible = speaking;
+    if (!speaking) {
+      this.speakingRing.alpha = 0.8;
+      this._speakingPulse = 0;
+    }
+  }
+
+  /**
+   * Call each frame to animate the speaking indicator pulse.
+   */
+  updateSpeakingAnimation(delta: number): void {
+    if (!this._isSpeaking) return;
+    this._speakingPulse += delta * 0.1;
+    // Pulse alpha between 0.4 and 1.0
+    this.speakingRing.alpha = 0.7 + 0.3 * Math.sin(this._speakingPulse);
   }
 }
