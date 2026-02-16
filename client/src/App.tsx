@@ -1,9 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Canvas } from './components/Canvas';
-import { connectSocket, joinGame, disconnectSocket } from './services/socket';
+import { AuthForms } from './components/AuthForms';
+import { Lobby } from './components/Lobby';
+import { Card } from './components/ui/Card';
+import { ToastProvider } from './components/ui/Toast';
+import { GradientBackground } from './components/GradientBackground';
+import { disconnectSocket } from './services/socket';
+import { fetchProfile } from './services/auth';
 import { useGameStore } from './store/useGameStore';
 import { toggleMute } from './services/webrtc';
 import { spatialAudio } from './services/spatialAudio';
+import { fadeScaleVariants, zoomInVariants } from './animations/transitions';
 
 function VoiceControls() {
   const muted = useGameStore((s) => s.muted);
@@ -61,67 +69,131 @@ function VoiceControls() {
   );
 }
 
-export function App() {
-  const [username, setUsername] = useState('');
-  const connected = useGameStore((s) => s.connected);
-  const joined = useGameStore((s) => s.joined);
+function SessionSkeleton() {
+  return (
+    <>
+      <GradientBackground />
+      <div className="w-screen h-screen flex items-center justify-center">
+        <Card variant="glass" padding="lg" className="max-w-sm w-full">
+          <div className="flex flex-col items-center space-y-4">
+            {/* Avatar skeleton */}
+            <div className="w-16 h-16 rounded-full bg-surface-700 animate-pulse" />
 
+            {/* Username skeleton */}
+            <div className="w-32 h-4 bg-surface-700 animate-pulse rounded" />
+
+            {/* Button skeletons */}
+            <div className="w-full h-10 bg-surface-700 animate-pulse rounded-lg" />
+            <div className="w-full h-10 bg-surface-700 animate-pulse rounded-lg" />
+          </div>
+        </Card>
+      </div>
+    </>
+  );
+}
+
+export function App() {
+  const isAuthenticated = useGameStore((s) => s.isAuthenticated);
+  const joined = useGameStore((s) => s.joined);
+  const [restoring, setRestoring] = useState(true);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+
+  // Minimum skeleton display time (300ms)
   useEffect(() => {
-    connectSocket();
+    const timer = setTimeout(() => setMinTimeElapsed(true), 300);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Auto-restore session from stored tokens on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function restoreSession() {
+      try {
+        const user = await fetchProfile();
+        if (!cancelled && user) {
+          useGameStore.getState().setAuthUser(user);
+        }
+      } catch {
+        // No valid session — show login
+      } finally {
+        if (!cancelled) setRestoring(false);
+      }
+    }
+
+    restoreSession();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
       disconnectSocket();
       spatialAudio.cleanup();
     };
   }, []);
 
-  const handleJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const name = username.trim();
-    if (name && connected) {
-      // Initialize spatial audio on user gesture (satisfies autoplay policy)
-      spatialAudio.initialize();
-      await spatialAudio.resume();
-      joinGame(name);
-    }
-  };
+  const showSkeleton = restoring || !minTimeElapsed;
 
-  if (!joined) {
-    return (
-      <div className="w-screen h-screen bg-gray-900 flex items-center justify-center">
-        <form onSubmit={handleJoin} className="bg-gray-800 p-8 rounded-lg shadow-lg">
-          <h1 className="text-white text-3xl font-bold mb-6 text-center">Talk Space</h1>
-          <div className="mb-4">
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your name"
-              maxLength={20}
-              autoFocus
-              className="w-full px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={!connected || !username.trim()}
-            className="w-full py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {connected ? 'Join' : 'Connecting...'}
-          </button>
-          {!connected && (
-            <p className="text-gray-400 text-sm mt-3 text-center">
-              Connecting to server...
-            </p>
-          )}
-        </form>
-      </div>
-    );
-  }
+  // Determine current page key for AnimatePresence
+  const pageKey = showSkeleton ? 'skeleton' : !isAuthenticated ? 'auth' : !joined ? 'lobby' : 'game';
 
   return (
-    <div className="w-screen h-screen relative">
-      <Canvas />
-      <VoiceControls />
-    </div>
+    <>
+      <ToastProvider />
+      <AnimatePresence mode="wait">
+        {pageKey === 'skeleton' && (
+          <motion.div
+            key="skeleton"
+            variants={fadeScaleVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="w-screen h-screen"
+          >
+            <SessionSkeleton />
+          </motion.div>
+        )}
+        {pageKey === 'auth' && (
+          <motion.div
+            key="auth"
+            variants={fadeScaleVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="w-screen h-screen"
+          >
+            <AuthForms />
+          </motion.div>
+        )}
+        {pageKey === 'lobby' && (
+          <motion.div
+            key="lobby"
+            variants={fadeScaleVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="w-screen h-screen"
+          >
+            <Lobby />
+          </motion.div>
+        )}
+        {pageKey === 'game' && (
+          <motion.div
+            key="game"
+            variants={zoomInVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="w-screen h-screen relative"
+          >
+            <Canvas />
+            <VoiceControls />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
