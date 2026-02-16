@@ -31,10 +31,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can interact with Button component showing all variants (primary, secondary, ghost, danger) with loading states and ripple effects
   4. User can type in Input component with floating label animation, focus glow ring, and validation state feedback
   5. User sees Card component with glassmorphism styling (backdrop-blur, white border, hover lift effect)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
+- [ ] 01-01-PLAN.md — Design tokens, Tailwind config, typography, and CSS foundation
+- [ ] 01-02-PLAN.md — Button and Input interactive components
+- [ ] 01-03-PLAN.md — Card, Badge, Tooltip, and Toast visual/feedback components
 
 ### Phase 2: Authentication & Lobby Redesign
 **Goal**: Create a cinematic, polished first impression from landing page through lobby entry
@@ -131,7 +133,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Design System Foundation | 0/0 | Not started | - |
+| 1. Design System Foundation | 0/3 | Planned | - |
 | 2. Authentication & Lobby Redesign | 0/0 | Not started | - |
 | 3. Game World Visual Upgrade | 0/0 | Not started | - |
 | 4. Avatar System Overhaul | 0/0 | Not started | - |
