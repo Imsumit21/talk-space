@@ -10,12 +10,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/space-grotesk": "^5.2.10",
     "@talk-space/shared": "*",
+    "colord": "^2.9.3",
     "mediasoup-client": "^3.6.95",
     "pixi.js": "^7.3.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "socket.io-client": "^4.6.1",
+    "tailwindcss-animate": "^1.0.7",
     "zustand": "^4.4.1"
   },
   "devDependencies": {
