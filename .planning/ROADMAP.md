@@ -136,7 +136,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Design System Foundation | 0/3 | Planned | - |
-| 2. Authentication & Lobby Redesign | 0/0 | Not started | - |
+| 2. Authentication & Lobby Redesign | 0/3 | Planned | - |
 | 3. Game World Visual Upgrade | 0/0 | Not started | - |
 | 4. Avatar System Overhaul | 0/0 | Not started | - |
 | 5. HUD & Overlay System | 0/0 | Not started | - |
