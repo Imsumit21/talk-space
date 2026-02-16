@@ -112,6 +112,15 @@ export default {
           "0%, 100%": { boxShadow: "0 0 0px 0px var(--tw-shadow-color)" },
           "50%": { boxShadow: "0 0 8px 2px var(--tw-shadow-color)" },
         },
+        meshGradient: {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "10%, 30%, 50%, 70%, 90%": { transform: "translateX(-8px)" },
+          "20%, 40%, 60%, 80%": { transform: "translateX(8px)" },
+        },
       },
       animation: {
         fadeIn: "fadeIn 200ms ease-out",
@@ -122,6 +131,8 @@ export default {
         ripple: "ripple 600ms ease-out",
         float: "float 3s ease-in-out infinite",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        meshGradient: "meshGradient 15s ease-in-out infinite",
+        shake: "shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97)",
       },
       boxShadow: {
         "glow-sm": "0 0 8px -2px var(--tw-shadow-color)",

@@ -57,6 +57,16 @@ body,
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3),
                 0 0 0 6px rgba(239, 68, 68, 0.2);
   }
+
+  .gradient-mesh-animate {
+    animation: meshGradient 15s ease-in-out infinite;
+  }
+}
+
+@media (max-width: 768px) {
+  .gradient-mesh-animate {
+    animation: none !important;
+  }
 }
 
 /* Respect user motion preferences */
