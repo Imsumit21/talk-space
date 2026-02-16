@@ -5,15 +5,17 @@ export interface Position {
 
 export interface UserState {
   id: string;
+  userId: string; // persistent database UUID
   username: string;
   position: Position;
   color: string;
+  avatarUrl?: string;
 }
 
 // --- Proximity types ---
 
 export interface ProximityEvent {
-  type: 'enter' | 'exit';
+  type: "enter" | "exit";
   userId: string;
   distance: number;
 }
@@ -30,7 +32,7 @@ export interface TransportOptions {
 export interface ConsumeOptions {
   id: string;
   producerId: string;
-  kind: 'audio';
+  kind: "audio";
   rtpParameters: unknown;
 }
 
@@ -41,7 +43,11 @@ export interface ServerToClientEvents {
   positionUpdate: (users: UserState[]) => void;
   userJoined: (user: UserState) => void;
   userLeft: (userId: string) => void;
-  joinSuccess: (data: { id: string; users: UserState[] }) => void;
+  joinSuccess: (data: {
+    id: string;
+    userId: string;
+    users: UserState[];
+  }) => void;
 
   // Phase 2: Proximity
   proximityEnter: (data: { userId: string; distance: number }) => void;
@@ -50,37 +56,57 @@ export interface ServerToClientEvents {
   // Phase 2: mediasoup signaling
   newProducer: (data: { producerId: string; userId: string }) => void;
   producerClosed: (data: { producerId: string; userId: string }) => void;
+
+  // Phase 2: Lobby
+  onlineCount: (count: number) => void;
+
+  // Phase 4: Friends notifications
+  friendRequest: (data: {
+    id: string;
+    from: { id: string; username: string };
+  }) => void;
+  friendAccepted: (data: {
+    id: string;
+    user: { id: string; username: string };
+  }) => void;
 }
 
 export interface ClientToServerEvents {
   // Phase 1: Position sync
   positionUpdate: (position: Position) => void;
-  join: (username: string) => void;
+  join: (
+    callback: (data: {
+      id: string;
+      userId: string;
+      users: UserState[];
+    }) => void,
+  ) => void;
 
   // Phase 2: mediasoup signaling
-  getRouterRtpCapabilities: (
-    callback: (capabilities: unknown) => void
-  ) => void;
+  getRouterRtpCapabilities: (callback: (capabilities: unknown) => void) => void;
   createTransport: (
-    data: { direction: 'send' | 'recv' },
-    callback: (options: TransportOptions) => void
+    data: { direction: "send" | "recv" },
+    callback: (options: TransportOptions) => void,
   ) => void;
   connectTransport: (
     data: { transportId: string; dtlsParameters: unknown },
-    callback: (response: { connected: boolean }) => void
+    callback: (response: { connected: boolean }) => void,
   ) => void;
   produce: (
-    data: { transportId: string; kind: 'audio'; rtpParameters: unknown },
-    callback: (response: { producerId: string }) => void
+    data: { transportId: string; kind: "audio"; rtpParameters: unknown },
+    callback: (response: { producerId: string }) => void,
   ) => void;
   consume: (
     data: { producerId: string; rtpCapabilities: unknown },
-    callback: (options: ConsumeOptions) => void
+    callback: (options: ConsumeOptions) => void,
   ) => void;
   consumerResume: (
     data: { consumerId: string },
-    callback: (response: { resumed: boolean }) => void
+    callback: (response: { resumed: boolean }) => void,
   ) => void;
+
+  // Phase 2: Lobby
+  getOnlineCount: () => void;
 }
 
 // --- Constants ---
