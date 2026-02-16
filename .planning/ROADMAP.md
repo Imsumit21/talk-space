@@ -49,10 +49,12 @@ Plans:
   4. User experiences error feedback via form shake animation, red glow on invalid fields, and descriptive toast notifications
   5. User sees polished lobby with gradient avatar, username, live online count badge, and prominent "Enter Space" button
   6. User experiences smooth transitions: fade/scale from auth to lobby, zoom-in from lobby to game space, skeleton loading on session restore
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
+- [ ] 02-01-PLAN.md — Dependencies, Zod schemas, gradient mesh background, CSS animations
+- [ ] 02-02-PLAN.md — Glassmorphism auth card, form validation, password strength, error feedback, social auth placeholders
+- [ ] 02-03-PLAN.md — Polished lobby, framer-motion page transitions, skeleton loading
 
 ### Phase 3: Game World Visual Upgrade
 **Goal**: Transform the dark grid canvas into an immersive space environment with depth and decorations
